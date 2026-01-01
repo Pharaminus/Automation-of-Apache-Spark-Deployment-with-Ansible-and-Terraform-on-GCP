@@ -82,6 +82,7 @@
 
 - name: Attendre Master
   wait_for:
+    host: "{{ master_ip | default('127.0.0.1') }}"
     port: "{{ spark_master_port }}"
     delay: 5
     timeout: 60
