@@ -1,0 +1,10 @@
+---
+spark_version: "3.5.0"
+spark_hadoop_version: "3"
+spark_download_url: "https://archive.apache.org/dist/spark/spark-{{ spark_version }}/spark-{{ spark_version }}-bin-hadoop{{ spark_hadoop_version }}.tgz"
+spark_install_dir: "/opt/spark"
+spark_home: "{{ spark_install_dir }}"
+spark_master_url: "spark://{{ master_ip }}:7077"
+spark_worker_webui_port: 8081
+spark_worker_memory: "4g"
+spark_worker_cores: 2

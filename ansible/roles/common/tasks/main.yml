@@ -1,0 +1,61 @@
+---
+- name: Mise à jour cache APT
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Installation paquets système
+  apt:
+    name:
+      - curl
+      - wget
+      - vim
+      - htop
+      - net-tools
+      - python3-pip
+      - software-properties-common
+    state: present
+
+- name: Installation Java 11
+  apt:
+    name:
+      - openjdk-11-jdk
+      - openjdk-11-jre
+    state: present
+
+- name: Configuration JAVA_HOME
+  lineinfile:
+    path: /etc/environment
+    regexp: '^JAVA_HOME='
+    line: 'JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64'
+    create: yes
+
+- name: Créer groupe spark
+  group:
+    name: spark
+    state: present
+
+- name: Créer utilisateur spark
+  user:
+    name: spark
+    group: spark
+    shell: /bin/bash
+    create_home: yes
+    home: /home/spark
+
+- name: Configuration limites système
+  pam_limits:
+    domain: spark
+    limit_type: "{{ item.type }}"
+    limit_item: "{{ item.item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { type: 'soft', item: 'nofile', value: '65536' }
+    - { type: 'hard', item: 'nofile', value: '65536' }
+    - { type: 'soft', item: 'nproc', value: '32768' }
+    - { type: 'hard', item: 'nproc', value: '32768' }
+
+- name: Désactiver swap
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+  ignore_errors: yes

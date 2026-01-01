@@ -1,0 +1,4 @@
+---
+java_version: "11"
+spark_user: "spark"
+spark_group: "spark"

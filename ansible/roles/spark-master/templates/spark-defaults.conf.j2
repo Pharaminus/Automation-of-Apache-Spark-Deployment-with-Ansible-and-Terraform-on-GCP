@@ -1,0 +1,11 @@
+spark.master                     spark://{{ spark_master_host }}:{{ spark_master_port }}
+spark.serializer                 org.apache.spark.serializer.KryoSerializer
+spark.rdd.compress               true
+spark.eventLog.enabled           true
+spark.eventLog.dir               file://{{ spark_home }}/logs/spark-events
+spark.history.fs.logDirectory    file://{{ spark_home }}/logs/spark-events
+spark.ui.showConsoleProgress     true
+spark.driver.host                {{ spark_master_host }}
+spark.driver.bindAddress         0.0.0.0
+spark.executor.memory            2g
+spark.executor.cores             2

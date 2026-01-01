@@ -1,0 +1,43 @@
+---
+- name: Configuration commune
+  hosts: spark_cluster
+  become: yes
+  roles:
+    - common
+
+- name: Configuration Master
+  hosts: spark_master
+  become: yes
+  roles:
+    - spark-master
+
+- name: Configuration Workers
+  hosts: spark_workers
+  become: yes
+  roles:
+    - spark-worker
+
+- name: Configuration Edge
+  hosts: spark_edge
+  become: yes
+  roles:
+    - common
+    - spark-worker
+
+- name: Vérification cluster
+  hosts: spark_master
+  become: yes
+  tasks:
+    - name: Version Spark
+      command: "{{ spark_home }}/bin/spark-submit --version"
+      register: spark_version
+      changed_when: false
+
+    - name: Message succès
+      debug:
+        msg:
+          - "====================================="
+          - "Cluster Spark déployé !"
+          - "====================================="
+          - "Master UI: http://{{ ansible_default_ipv4.address }}:8080"
+          - "Master URL: spark://{{ master_ip }}:7077"

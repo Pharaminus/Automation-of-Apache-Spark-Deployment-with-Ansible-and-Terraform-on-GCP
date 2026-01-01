@@ -1,0 +1,37 @@
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars.backup
+
+# Ansible
+*.retry
+ansible.log
+
+# Credentials (CRITIQUE!)
+*.json
+gcp-key.json
+credentials/
+*-key.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+.DS_Store?
+
+# Logs et résultats
+*.log
+results/
+output*/
+
+# Builds
+*.jar
+target/
+project/target/
