@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>{{ hdfs_replication_factor }}</value>
+        <description>Default block replication</description>
+    </property>
+
+    <property>
+        <name>dfs.blocksize</name>
+        <value>{{ hdfs_block_size }}</value>
+        <description>Block size</description>
+    </property>
+
+    <property>
+        <name>dfs.namenode.name.dir</name>
+        <value>file://{{ hdfs_namenode_dir }}</value>
+        <description>NameNode directory for namespace and transaction logs</description>
+    </property>
+
+    <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>file://{{ hdfs_datanode_dir }}</value>
+        <description>DataNode directory</description>
+    </property>
+
+    <property>
+        <name>dfs.namenode.http-address</name>
+        <value>0.0.0.0:{{ namenode_http_port }}</value>
+        <description>NameNode Web UI</description>
+    </property>
+
+    <property>
+        <name>dfs.datanode.http.address</name>
+        <value>0.0.0.0:{{ datanode_http_port }}</value>
+        <description>DataNode Web UI</description>
+    </property>
+
+    <property>
+        <name>dfs.permissions.enabled</name>
+        <value>false</value>
+        <description>Disable permissions for simplicity</description>
+    </property>
+
+    <property>
+        <name>dfs.webhdfs.enabled</name>
+        <value>true</value>
+        <description>Enable WebHDFS</description>
+    </property>
+</configuration>

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# Java Home
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+
+# Hadoop Home
+export HADOOP_HOME={{ hadoop_home }}
+export HADOOP_CONF_DIR={{ hadoop_conf_dir }}
+
+# Hadoop Options
+export HADOOP_OPTS="-Djava.net.preferIPv4Stack=true"
+
+# NameNode heap size
+export HDFS_NAMENODE_OPTS="-Xmx1g"
+
+# DataNode heap size
+export HDFS_DATANODE_OPTS="-Xmx512m"
+
+# Log directory
+export HADOOP_LOG_DIR=/var/log/hadoop

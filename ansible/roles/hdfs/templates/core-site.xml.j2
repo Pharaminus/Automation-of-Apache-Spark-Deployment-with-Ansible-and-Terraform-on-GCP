@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://{{ hostvars[groups['spark_master'][0]]['ansible_default_ipv4']['address'] }}:{{ namenode_port }}</value>
+        <description>NameNode URI</description>
+    </property>
+
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>{{ hdfs_tmp_dir }}</value>
+        <description>Temporary directory</description>
+    </property>
+
+    <property>
+        <name>io.file.buffer.size</name>
+        <value>131072</value>
+        <description>Buffer size for read/write operations</description>
+    </property>
+</configuration>

@@ -1,0 +1,21 @@
+[Unit]
+Description=Hadoop HDFS DataNode
+After=network.target
+
+[Service]
+Type=forking
+User={{ hadoop_user }}
+Group={{ hadoop_group }}
+Environment="JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64"
+Environment="HADOOP_HOME={{ hadoop_home }}"
+Environment="HADOOP_CONF_DIR={{ hadoop_conf_dir }}"
+Environment="HADOOP_LOG_DIR=/var/log/hadoop"
+ExecStart=/bin/bash -c 'source /etc/profile.d/hadoop.sh && {{ hadoop_home }}/sbin/hadoop-daemon.sh start datanode'
+ExecStop=/bin/bash -c 'source /etc/profile.d/hadoop.sh && {{ hadoop_home }}/sbin/hadoop-daemon.sh stop datanode'
+PIDFile=/tmp/hadoop-{{ hadoop_user }}-datanode.pid
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

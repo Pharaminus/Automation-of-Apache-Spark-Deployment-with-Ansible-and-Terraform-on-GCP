@@ -1,0 +1,188 @@
+---
+- name: Installation HDFS sur tous les nœuds
+  hosts: spark_cluster
+  become: yes
+  roles:
+    - hdfs
+
+- name: Configuration SSH pour Hadoop (NameNode)
+  hosts: spark_master
+  become: yes
+  tasks:
+    - name: Générer clé SSH pour utilisateur hadoop
+      user:
+        name: hadoop
+        generate_ssh_key: yes
+        ssh_key_type: rsa
+        ssh_key_bits: 4096
+        ssh_key_file: .ssh/id_rsa
+
+    - name: Récupérer la clé publique
+      slurp:
+        src: /home/hadoop/.ssh/id_rsa.pub
+      register: hadoop_pubkey
+
+- name: Distribuer clé SSH sur les workers
+  hosts: spark_workers
+  become: yes
+  tasks:
+    - name: Créer répertoire .ssh pour hadoop
+      file:
+        path: /home/hadoop/.ssh
+        state: directory
+        owner: hadoop
+        group: hadoop
+        mode: '0700'
+
+    - name: Autoriser la clé du master
+      authorized_key:
+        user: hadoop
+        key: "{{ hostvars[groups['spark_master'][0]]['hadoop_pubkey']['content'] | b64decode }}"
+        state: present
+
+- name: Formater NameNode
+  hosts: spark_master
+  become: yes
+  become_user: hadoop
+  vars:
+    hadoop_home: "/opt/hadoop"
+    hdfs_namenode_dir: "/data/hadoop/hdfs/namenode"
+  tasks:
+    - name: Vérifier si NameNode est déjà formaté
+      stat:
+        path: "{{ hdfs_namenode_dir }}/current/VERSION"
+      register: namenode_formatted
+
+    - name: Formater NameNode
+      shell: |
+        source /etc/profile.d/hadoop.sh
+        {{ hadoop_home }}/bin/hdfs namenode -format -force
+      args:
+        executable: /bin/bash
+      when: not namenode_formatted.stat.exists
+
+- name: Créer services systemd pour HDFS
+  hosts: spark_cluster
+  become: yes
+  vars:
+    hadoop_user: "hadoop"
+    hadoop_group: "hadoop"
+    hadoop_home: "/opt/hadoop"
+    hadoop_conf_dir: "/opt/hadoop/etc/hadoop"
+  tasks:
+    - name: Service NameNode
+      template:
+        src: ../roles/hdfs/templates/hdfs-namenode.service.j2
+        dest: /etc/systemd/system/hdfs-namenode.service
+        mode: '0644'
+      when: inventory_hostname in groups['spark_master']
+
+    - name: Service DataNode
+      template:
+        src: ../roles/hdfs/templates/hdfs-datanode.service.j2
+        dest: /etc/systemd/system/hdfs-datanode.service
+        mode: '0644'
+      when: inventory_hostname in groups['spark_workers']
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+- name: Démarrer NameNode
+  hosts: spark_master
+  become: yes
+  tasks:
+    - name: Démarrer et activer NameNode
+      systemd:
+        name: hdfs-namenode
+        state: started
+        enabled: yes
+
+    - name: Attendre que NameNode soit prêt
+      wait_for:
+        host: "{{ ansible_default_ipv4.address }}"
+        port: 9000
+        delay: 5
+        timeout: 60
+
+- name: Démarrer DataNodes
+  hosts: spark_workers
+  become: yes
+  tasks:
+    - name: Démarrer et activer DataNode
+      systemd:
+        name: hdfs-datanode
+        state: started
+        enabled: yes
+
+    - name: Attendre que DataNode soit prêt
+      wait_for:
+        port: 9866
+        delay: 5
+        timeout: 60
+
+- name: Créer répertoires HDFS pour les utilisateurs
+  hosts: spark_master
+  become: yes
+  become_user: hadoop
+  vars:
+    hadoop_home: "/opt/hadoop"
+  tasks:
+    - name: Attendre la disponibilité HDFS
+      pause:
+        seconds: 15
+
+    - name: Créer répertoire /user
+      shell: |
+        source /etc/profile.d/hadoop.sh
+        {{ hadoop_home }}/bin/hdfs dfs -mkdir -p /user
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+
+    - name: Créer répertoire /user/spark-admin
+      shell: |
+        source /etc/profile.d/hadoop.sh
+        {{ hadoop_home }}/bin/hdfs dfs -mkdir -p /user/spark-admin
+        {{ hadoop_home }}/bin/hdfs dfs -chown spark-admin:spark /user/spark-admin
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+
+    - name: Créer répertoire /tmp
+      shell: |
+        source /etc/profile.d/hadoop.sh
+        {{ hadoop_home }}/bin/hdfs dfs -mkdir -p /tmp
+        {{ hadoop_home }}/bin/hdfs dfs -chmod 1777 /tmp
+      args:
+        executable: /bin/bash
+      ignore_errors: yes
+
+- name: Vérification HDFS
+  hosts: spark_master
+  become: yes
+  become_user: hadoop
+  vars:
+    hadoop_home: "/opt/hadoop"
+  tasks:
+    - name: Rapport HDFS
+      shell: |
+        source /etc/profile.d/hadoop.sh
+        {{ hadoop_home }}/bin/hdfs dfsadmin -report
+      args:
+        executable: /bin/bash
+      register: hdfs_report
+
+    - name: Afficher rapport
+      debug:
+        var: hdfs_report.stdout_lines
+
+    - name: Message de succès
+      debug:
+        msg:
+          - "====================================="
+          - "HDFS déployé avec succès !"
+          - "====================================="
+          - "NameNode UI: http://{{ ansible_default_ipv4.address }}:9870"
+          - "HDFS URI: hdfs://{{ ansible_default_ipv4.address }}:9000"
+          - "====================================="
