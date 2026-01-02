@@ -13,3 +13,11 @@ output "worker_ips" {
 output "ssh_command_master" {
   value = "ssh -i ~/.ssh/spark-cluster spark-admin@${module.compute.master_public_ip}"
 }
+
+output "edge_public_ip" {
+  value = module.compute.edge_public_ip
+}
+
+output "ssh_command_edge" {
+  value = "ssh -i ~/.ssh/spark-cluster spark-admin@${module.compute.edge_public_ip}"
+}

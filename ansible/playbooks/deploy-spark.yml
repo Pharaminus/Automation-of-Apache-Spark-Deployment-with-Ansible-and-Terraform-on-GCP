@@ -27,6 +27,8 @@
 - name: Vérification cluster
   hosts: spark_master
   become: yes
+  vars:
+    spark_home: "/opt/spark"
   tasks:
     - name: Version Spark
       command: "{{ spark_home }}/bin/spark-submit --version"
